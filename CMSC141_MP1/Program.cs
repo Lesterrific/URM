@@ -13,6 +13,7 @@ namespace CMSC141_MP1 {
             URM URMachine = new URM();
             //Console.WriteLine("\n-------------------------------------");
             URMachine.Execute(URMP);
+            URMachine.WriteStateHistoryToFile(Path.Combine(Directory.GetCurrentDirectory(), "mp1.out"));
         }
     }
 
@@ -20,12 +21,22 @@ namespace CMSC141_MP1 {
 
         URMProgram Program;
         int InstructionPointer;
+        List<string> StateHistory;
+
+        public URM() {
+            StateHistory = new List<string>();
+        }
+
+        public void Reset() {
+            StateHistory.Clear();
+            InstructionPointer = 0;
+        }
 
         public void Execute(URMProgram P) {
-            
+
             //Console.WriteLine("\nRunning the program...");
+            Reset();
             Program = P;
-            InstructionPointer = 0;
             PrintState();
 
             while(InstructionPointer < Program.Instructions.Length) {
@@ -66,10 +77,21 @@ namespace CMSC141_MP1 {
         }
 
         void PrintState() {
+            string CurrentState = "\n";
             foreach(var Register in Program.State) {
-                Console.Write(Register + " ");
+                CurrentState = CurrentState + Register + " ";
             }
-            Console.WriteLine("");
+            Console.WriteLine(CurrentState);
+            StateHistory.Add(CurrentState);
+        }
+
+        public void WriteStateHistoryToFile(string OutputFilePath) {
+            try {
+                File.AppendAllLines(@OutputFilePath, StateHistory);
+            }
+            catch (FileNotFoundException e) {
+                Console.WriteLine("Error. Output File not found. \n" + e.Message);
+            }
         }
     }
 
