@@ -9,24 +9,37 @@ namespace CMSC141_MP1 {
 
     class Program {
         static void Main(string[] args) {
+
+            /* creating a URM program (initial state + instructions) from an external file */
             URMProgram URMP = new URMProgram(Path.Combine(Directory.GetCurrentDirectory(), "mp1.in"));
             URM URMachine = new URM();
             //Console.WriteLine("\n-------------------------------------");
+
+            /* starts executing the program loaded from an external file*/
             URMachine.Execute(URMP);
+
+            /* writing the state history to an external file */
             URMachine.WriteStateHistoryToFile(Path.Combine(Directory.GetCurrentDirectory(), "mp1.out"));
         }
     }
 
     public class URM {
 
+        /* the program that will be executed by the URM */
         URMProgram Program;
+
+        /* a number that keeps track of the line number to be executed next by the URM; 
+        normally increments by 1 after each instruction */
         int InstructionPointer;
+
+        /* a list that contains the state of the URM's registers after each instruction */
         List<string> StateHistory;
 
         public URM() {
             StateHistory = new List<string>();
         }
 
+        /* resets the URM to prepare it for re-execution/program */
         public void Reset() {
             StateHistory.Clear();
             InstructionPointer = 0;
@@ -37,10 +50,16 @@ namespace CMSC141_MP1 {
             //Console.WriteLine("\nRunning the program...");
             Reset();
             Program = P;
+            /* prints the initial state of the URM */
             PrintState();
 
+            /* loops through all the instructions of the URM Program */
             while(InstructionPointer < Program.Instructions.Length) {
                 if(InstructionPointer > Program.Instructions.Length) {
+                    /* 
+                        this is necessary for JUMP instructions that points to a line number beyond the number of instructions
+                        - which means to TERMINATE the program.
+                    */
                     break;
                 }
                 ExecuteInstruction(Program.Instructions[InstructionPointer]);
@@ -51,13 +70,16 @@ namespace CMSC141_MP1 {
         void ExecuteInstruction(string Instruction) {
             /* parsing the instruction */
             bool IJump = false;
+            /* splits the instruction into it's pieces separated by the space character */
             string[] ParsedInstruction = Instruction.Split(' ');
             if (ParsedInstruction[0] == "J") {
                 int comp1 = Program.State[int.Parse(ParsedInstruction[1])];
                 int comp2 = Program.State[int.Parse(ParsedInstruction[2])];
                 int jump = int.Parse(ParsedInstruction[3]) - 1;
                 if (comp1 == comp2) {
+                    /* if the JUMP condition is true, set the instruction pointer to the JUMP line number */
                     InstructionPointer = jump;
+                    /* setting this to TRUE means that the Instruction pointer will no be incremented as it's set to a particular line number*/
                     IJump = true;
                 }
             }
@@ -70,18 +92,21 @@ namespace CMSC141_MP1 {
             else if(ParsedInstruction[0] == "C") {
                 Program.State[int.Parse(ParsedInstruction[2])] = Program.State[int.Parse(ParsedInstruction[1])];
             }
+            /* incrementing the Instruction pointer by 1 if there is no JUMP */
             if(IJump == false) {
                 InstructionPointer++;
             }
+            /* print the state of the URM after the execution of the instruction */
             PrintState();
         }
 
         void PrintState() {
-            string CurrentState = "\n";
+            string CurrentState = "";
             foreach(var Register in Program.State) {
                 CurrentState = CurrentState + Register + " ";
             }
             Console.WriteLine(CurrentState);
+            /* as the state is printed, you add the state (represented in a string) to the State History list*/
             StateHistory.Add(CurrentState);
         }
 
@@ -97,7 +122,9 @@ namespace CMSC141_MP1 {
 
     public class URMProgram {
 
+        /* the instructions of the program read from the file */
         public string[] Instructions;
+        /* the initial state of the URM registers */
         public int[] State;
 
         public URMProgram(String FilePath) {
